@@ -34,6 +34,7 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
     espacamento = 1.5
     ts = (np.arange(n_planos) - (n_planos - 1) / 2.0) * espacamento
     theta = np.linspace(0, 2 * np.pi, 100)
+    angulos_O = np.arange(6) * (np.pi / 3) 
     n_aneis = max(int(n_aneis), 1)
     raios_aneis = raio * (np.arange(1, n_aneis + 1) / n_aneis)
 
