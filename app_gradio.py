@@ -18,7 +18,7 @@ def base_ortonormal(direcao):
     return u, v
 
 
-def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, preencher_disco):
+def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_disco):
     P = np.array([px, py, pz], dtype=float)
     F = np.array([fx, fy, fz], dtype=float)
     norm_F = np.linalg.norm(F)
@@ -35,8 +35,12 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, preencher_disco):
     ts = (np.arange(n_planos) - (n_planos - 1) / 2.0) * espacamento
     theta = np.linspace(0, 2 * np.pi, 100)
 
-    # Pontos O equiespaçados de 60° (6 pontos por plano) em torno de Q
+    # Pontos O equiespaçados de 60° (6 pontos por anel) em torno de Q.
+    # Vários anéis concêntricos (raios diferentes) aumentam o nº de setas
+    # mantendo o espaçamento angular de 60° entre pontos de um mesmo anel.
     angulos_O = np.arange(6) * (np.pi / 3)  # 0, 60, 120, 180, 240, 300 graus
+    n_aneis = max(int(n_aneis), 1)
+    raios_aneis = raio * (np.arange(1, n_aneis + 1) / n_aneis)
 
     # ---- Linha de ação de F (vermelha) ----
     t_a, t_b = ts.min() - espacamento, ts.max() + espacamento
@@ -66,12 +70,13 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, preencher_disco):
     dados = []
     for t in ts:
         Q = P + t * n
-        for ang in angulos_O:
-            O = Q + raio * (np.cos(ang) * u + np.sin(ang) * v)
-            M = np.cross(P - O, F)
-            mod_M = np.linalg.norm(M)
-            ponta = O + M * 0.15
-            dados.append((O, Q, ponta, mod_M))
+        for r_anel in raios_aneis:
+            for ang in angulos_O:
+                O = Q + r_anel * (np.cos(ang) * u + np.sin(ang) * v)
+                M = np.cross(P - O, F)
+                mod_M = np.linalg.norm(M)
+                ponta = O + M * 0.15
+                dados.append((O, Q, ponta, mod_M))
 
     # ---- Planos circulares (normais à linha de ação) ----
     for idx, t in enumerate(ts):
@@ -173,7 +178,8 @@ with gr.Blocks(title="Campo de Momentos 3D com Discos") as demo:
     gr.Markdown(
         "F e sua linha de ação em **vermelho**; vetores M(O) em **preto**; "
         "retas O→Q em **verde tracejado**; retas M(O)→Q em **azul tracejado**. "
-        "Em cada plano normal a F, os 6 pontos O ficam equiespaçados de **60°**."
+        "Em cada plano normal a F, os pontos O formam anéis concêntricos de 6 pontos, "
+        "sempre equiespaçados de **60°** dentro de cada anel."
     )
 
     with gr.Row():
@@ -191,6 +197,8 @@ with gr.Blocks(title="Campo de Momentos 3D com Discos") as demo:
             gr.Markdown("### Geometria do Cilindro")
             raio = gr.Slider(minimum=0.5, maximum=3.0, value=1.2, label="Raio do Cilindro")
             n_planos = gr.Slider(minimum=1, maximum=9, value=5, step=1, label="Nº de Planos")
+            n_aneis = gr.Slider(minimum=1, maximum=5, value=2, step=1,
+                                 label="Nº de Anéis por Plano (6 setas cada, a 60°)")
             preencher = gr.Checkbox(value=True, label="Preencher superfície dos discos")
 
             btn = gr.Button("Atualizar Campo", variant="primary")
@@ -198,7 +206,7 @@ with gr.Blocks(title="Campo de Momentos 3D com Discos") as demo:
         with gr.Column(scale=3):
             plot = gr.Plot(label="Visualização 3D")
 
-    inputs = [fx, fy, fz, px, py, pz, raio, n_planos, preencher]
+    inputs = [fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher]
     btn.click(fn=gerar_campo_3d, inputs=inputs, outputs=plot)
     demo.load(fn=gerar_campo_3d, inputs=inputs, outputs=plot)
 
