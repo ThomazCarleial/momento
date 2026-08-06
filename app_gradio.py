@@ -120,7 +120,7 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
         zg += [O[2], Q[2], None]
     fig.add_trace(go.Scatter3d(
         x=xg, y=yg, z=zg, mode='lines',
-        line=dict(color='green', width=3, dash='dash'),
+        line=dict(color='green', width=2, dash='dot'),
         name='O → Q', showlegend=True
     ))
 
@@ -132,7 +132,7 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
         zb += [ponta[2], Q[2], None]
     fig.add_trace(go.Scatter3d(
         x=xb, y=yb, z=zb, mode='lines',
-        line=dict(color='blue', width=3, dash='dash'),
+        line=dict(color='blue', width=2, dash='dot'),
         name='M(O) → Q', showlegend=True
     ))
 
