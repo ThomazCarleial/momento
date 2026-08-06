@@ -205,4 +205,6 @@ with gr.Blocks(title="Campo de Momentos 3D com Discos") as demo:
     demo.load(fn=gerar_campo_3d, inputs=inputs, outputs=plot)
 
 if __name__ == "__main__":
-    demo.launch()
+    import os
+    port = int(os.environ.get("PORT", 7860))
+    demo.launch(server_name="0.0.0.0", server_port=port)
