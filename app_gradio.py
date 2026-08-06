@@ -34,24 +34,17 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
     espacamento = 1.5
     ts = (np.arange(n_planos) - (n_planos - 1) / 2.0) * espacamento
     theta = np.linspace(0, 2 * np.pi, 100)
-
-    # Pontos O equiespaçados de 60° (6 pontos por anel) em torno de Q.
-    # Vários anéis concêntricos (raios diferentes) aumentam o nº de setas
-    # mantendo o espaçamento angular de 60° entre pontos de um mesmo anel.
-    angulos_O = np.arange(6) * (np.pi / 3)  # 0, 60, 120, 180, 240, 300 graus
     n_aneis = max(int(n_aneis), 1)
     raios_aneis = raio * (np.arange(1, n_aneis + 1) / n_aneis)
 
-    # ---- Linha de ação de F (vermelha) ----
     t_a, t_b = ts.min() - espacamento, ts.max() + espacamento
     p_ini, p_fim = P + t_a * n, P + t_b * n
     fig.add_trace(go.Scatter3d(
         x=[p_ini[0], p_fim[0]], y=[p_ini[1], p_fim[1]], z=[p_ini[2], p_fim[2]],
-        mode='lines', line=dict(color='red', width=6), name='Linha de Ação de F'
+        mode='lines', line=dict(color='red', width=6, dash='dash'), name='Linha de Ação de F'
     ))
 
-    # ---- Vetor força F aplicado em P (vermelho) ----
-    escala_F = espacamento * 0.9 / max(norm_F, 1e-9)
+    escala_F = 0.5
     F_ponta = P + F * escala_F
     fig.add_trace(go.Scatter3d(
         x=[P[0], F_ponta[0]], y=[P[1], F_ponta[1]], z=[P[2], F_ponta[2]],
@@ -66,7 +59,6 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
         text=['P'], textposition='top center', name='Ponto P'
     ))
 
-    # Coleta de dados: O, Q, ponta do vetor M(O), módulo de M
     dados = []
     for t in ts:
         Q = P + t * n
@@ -78,7 +70,6 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
                 ponta = O + M * 0.15
                 dados.append((O, Q, ponta, mod_M))
 
-    # ---- Planos circulares (normais à linha de ação) ----
     for idx, t in enumerate(ts):
         Q = P + t * n
         cx = Q[0] + raio * (np.cos(theta) * u[0] + np.sin(theta) * v[0])
@@ -112,7 +103,6 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
             hovertemplate=f'Q (t={t:.2f})<extra></extra>'
         ))
 
-    # ---- Retas tracejadas verdes: O -> Q ----
     xg, yg, zg = [], [], []
     for O, Q, ponta, mod_M in dados:
         xg += [O[0], Q[0], None]
@@ -124,7 +114,6 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
         name='O → Q', showlegend=True
     ))
 
-    # ---- Retas tracejadas azuis: M(O) -> Q ----
     xb, yb, zb = [], [], []
     for O, Q, ponta, mod_M in dados:
         xb += [ponta[0], Q[0], None]
@@ -135,8 +124,6 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
         line=dict(color='blue', width=2, dash='dot'),
         name='M(O) → Q', showlegend=True
     ))
-
-    # ---- Vetores M(O) em preto (de O até a ponta) ----
     xm, ym, zm = [], [], []
     for O, Q, ponta, mod_M in dados:
         xm += [O[0], ponta[0], None]
@@ -148,7 +135,6 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
         name='Vetores M(O)', showlegend=True
     ))
 
-    # ---- Pontos O e pontas de M(O), com hover mostrando o módulo ----
     fig.add_trace(go.Scatter3d(
         x=[d[0][0] for d in dados], y=[d[0][1] for d in dados], z=[d[0][2] for d in dados],
         mode='markers', marker=dict(size=4, color='darkgreen'),
