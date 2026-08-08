@@ -34,7 +34,7 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
     espacamento = 1.5
     ts = (np.arange(n_planos) - (n_planos - 1) / 2.0) * espacamento
     theta = np.linspace(0, 2 * np.pi, 100)
-    angulos_O = np.arange(6) * (np.pi / 3) 
+    angulos_O = np.arange(6) * (np.pi / 3)
     n_aneis = max(int(n_aneis), 1)
     raios_aneis = raio * (np.arange(1, n_aneis + 1) / n_aneis)
 
@@ -42,16 +42,26 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
     p_ini, p_fim = P + t_a * n, P + t_b * n
     fig.add_trace(go.Scatter3d(
         x=[p_ini[0], p_fim[0]], y=[p_ini[1], p_fim[1]], z=[p_ini[2], p_fim[2]],
-        mode='lines', line=dict(color='red', width=6, dash='dash'), name='Linha de Ação de F'
+        mode='lines', line=dict(color='red', width=3.5, dash='dash'), name='Linha de Ação de F'
     ))
-
     escala_F = 0.5
     F_ponta = P + F * escala_F
     fig.add_trace(go.Scatter3d(
         x=[P[0], F_ponta[0]], y=[P[1], F_ponta[1]], z=[P[2], F_ponta[2]],
-        mode='lines+markers', line=dict(color='red', width=8),
-        marker=dict(size=[0, 4], color='red', symbol='diamond'),
+        mode='lines', line=dict(color='red', width=8),
         name='Vetor Força F'
+    ))
+    tamanho_seta_F = max(raio * 0.35, 0.12)
+    fig.add_trace(go.Cone(
+        x=[F_ponta[0]], y=[F_ponta[1]], z=[F_ponta[2]],
+        u=[n[0]], v=[n[1]], w=[n[2]],
+        anchor='tip',
+        sizemode='absolute',
+        sizeref=tamanho_seta_F,
+        colorscale=[[0, 'red'], [1, 'red']],
+        showscale=False,
+        hoverinfo='skip',
+        showlegend=False
     ))
 
     fig.add_trace(go.Scatter3d(
@@ -95,7 +105,6 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
                 showscale=False, hoverinfo='skip', showlegend=False
             ))
 
-        # Ponto Q de cada plano
         fig.add_trace(go.Scatter3d(
             x=[Q[0]], y=[Q[1]], z=[Q[2]],
             mode='markers+text', marker=dict(size=5, color='dimgray'),
@@ -125,6 +134,7 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
         line=dict(color='blue', width=2, dash='dot'),
         name='M(O) → Q', showlegend=True
     ))
+
     xm, ym, zm = [], [], []
     for O, Q, ponta, mod_M in dados:
         xm += [O[0], ponta[0], None]
@@ -143,13 +153,33 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
         customdata=[d[3] for d in dados],
         hovertemplate='O(x,y,z)<br>|M| = %{customdata:.3f} N·m<extra></extra>'
     ))
-    fig.add_trace(go.Scatter3d(
-        x=[d[2][0] for d in dados], y=[d[2][1] for d in dados], z=[d[2][2] for d in dados],
-        mode='markers', marker=dict(size=4, color='black'),
-        name='Pontos M(O)',
-        customdata=[d[3] for d in dados],
-        hovertemplate='M(O)<br>|M| = %{customdata:.3f} N·m<extra></extra>'
-    ))
+
+    if dados:
+        tamanho_seta_M = max(raio * 0.28, 0.10)
+        xu, yu, zu, uu, vu, wu, custom = [], [], [], [], [], [], []
+        for O, Q, ponta, mod_M in dados:
+            direcao = ponta - O
+            norm_dir = np.linalg.norm(direcao)
+            if norm_dir < 1e-9:
+                continue
+            dir_unit = direcao / norm_dir
+            xu.append(ponta[0]); yu.append(ponta[1]); zu.append(ponta[2])
+            uu.append(dir_unit[0]); vu.append(dir_unit[1]); wu.append(dir_unit[2])
+            custom.append(mod_M)
+
+        fig.add_trace(go.Cone(
+            x=xu, y=yu, z=zu,
+            u=uu, v=vu, w=wu,
+            anchor='tip',
+            sizemode='absolute',
+            sizeref=tamanho_seta_M,
+            colorscale=[[0, 'black'], [1, 'black']],
+            showscale=False,
+            customdata=custom,
+            hovertemplate='M(O)<br>|M| = %{customdata:.3f} N·m<extra></extra>',
+            name='Pontos M(O)',
+            showlegend=False
+        ))
 
     fig.update_layout(
         scene=dict(aspectmode='data'),
@@ -163,10 +193,10 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
 with gr.Blocks(title="Campo de Momentos 3D com Discos") as demo:
     gr.Markdown("# Campo de Momentos 3D com Planos Circulares")
     gr.Markdown(
-        "F e sua linha de ação em **vermelho**; vetores M(O) em **preto**; "
-        "retas O→Q em **verde tracejado**; retas M(O)→Q em **azul tracejado**. "
-        "Em cada plano normal a F, os pontos O formam anéis concêntricos de 6 pontos, "
-        "sempre equiespaçados de **60°** dentro de cada anel."
+        # "F e sua linha de ação em **vermelho**; vetores M(O) em **preto**; "
+        # "retas O→Q em **verde tracejado**; retas M(O)→Q em **azul tracejado**. "
+        # "Em cada plano normal a F, os pontos O formam anéis concêntricos de 6 pontos, "
+        # "sempre equiespaçados de **60°** dentro de cada anel."
     )
 
     with gr.Row():
