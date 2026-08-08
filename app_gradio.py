@@ -192,13 +192,6 @@ def gerar_campo_3d(fx, fy, fz, px, py, pz, raio, n_planos, n_aneis, preencher_di
 
 with gr.Blocks(title="Campo de Momentos 3D com Discos") as demo:
     gr.Markdown("# Campo de Momentos 3D com Planos Circulares")
-    gr.Markdown(
-        # "F e sua linha de ação em **vermelho**; vetores M(O) em **preto**; "
-        # "retas O→Q em **verde tracejado**; retas M(O)→Q em **azul tracejado**. "
-        # "Em cada plano normal a F, os pontos O formam anéis concêntricos de 6 pontos, "
-        # "sempre equiespaçados de **60°** dentro de cada anel."
-    )
-
     with gr.Row():
         with gr.Column(scale=1):
             gr.Markdown("### Vetor Força (F)")
